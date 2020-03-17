@@ -1,13 +1,7 @@
 /*
-    From version 1.4 onwards, libftd2xx easily supports devices with
-    custom Vendor and Product Ids.  Call FT_SetVIDPID for every VID+PID
-    that you wish your D2XX application to support.  There is no longer
-    any need to call FT_GetVIDPID, and the deprecated LibTable method
-    no longer works.
-    
     To build:
     1. Install libftd2xx.so in the /usr/local/lib directory.
-    2. gcc -o setVIDPID main.c -lftd2xx -lpthread -lrt -Wl,-rpath,/usr/local/lib
+    2. gcc -o heartbeat_i2c.c -lftd2xx -lpthread -lrt -Wl,-rpath,/usr/local/lib
 */
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,84 +13,12 @@
     #define _countof(a) (sizeof(a)/sizeof(*(a)))
 #endif /* _countof */
 
-
-
 int main (void)
 {
     FT_STATUS   ftStatus;
-    size_t      i;
     int         retCode = EXIT_FAILURE;
-    DWORD       libVersion = 0;
-    DWORD       standardDevices = 0;
-    DWORD       totalDevices = 0;
-    /* Specify as many VID+PID pairs as you wish to support. */
-    DWORD       vid[] = {0x0403, 0x7654, 0x7777, 0xdcba, 0x5a5a};
-    DWORD       pid[] = {0x4242, 0x1234, 0xabcd, 0xa5a5, 0xdcba};
-
     FT_HANDLE   ftHandle;
     DWORD       numdev = 0; 
-
-    (void)FT_GetLibraryVersion(&libVersion);
-    printf("D2XX version %08X\n", (unsigned int)libVersion);
-
-    if (libVersion < 0x00010400)
-    {
-        printf("This version of D2XX does not correctly support "
-               "multiple calls to FT_SetVIDPID.\n");
-        goto exit;
-    }
-
-    /* Initially, FT_ListDevices, FT_Open and FT_CreateDeviceInfoList 
-     * only consider devices with standard FTDI Vendor and Product Ids. 
-     */
-    ftStatus = FT_ListDevices(&standardDevices, 
-                              NULL, 
-                              FT_LIST_NUMBER_ONLY);
-    if (ftStatus != FT_OK) 
-    {
-        printf("FT_ListDevices failed: error code %d.\n", (int)ftStatus);
-        goto exit;
-    }
-
-    printf(
-        "%d device%s with standard FTDI Vendor and Product Ids detected.\n",
-        (int)standardDevices,
-        standardDevices == 1 ? "" : "s"
-        );
-
-    /* Tell D2XX about our additional VID+PID combinations. */
-    assert(_countof(vid) == _countof(pid));
-    for (i = 0; i < _countof(vid); i++)
-    {
-        ftStatus = FT_SetVIDPID(vid[i], pid[i]);
-        if (ftStatus != FT_OK)
-        {
-            printf("FT_SetVIDPID failed: error code %d.\n", (int)ftStatus);
-            goto exit;
-        }
-    }
-
-    /* Now FT_ListDevices, FT_Open and FT_CreateDeviceInfoList will
-     * consider devices with our custom Vendor and Product Ids, as 
-     * well as the standard FTDI Vendor and Product Ids.
-     */
-
-    ftStatus = FT_ListDevices(&totalDevices, 
-                              NULL, 
-                              FT_LIST_NUMBER_ONLY);
-    if (ftStatus != FT_OK) 
-    {
-        printf("FT_ListDevices failed: error code %d.\n", (int)ftStatus);
-        goto exit;
-    }
-
-    printf(
-        "%d supported device%s detected: %d standard, %d custom.\n",
-        (int)totalDevices,
-        totalDevices == 1 ? "" : "s",
-        (int)standardDevices,
-        (int)(totalDevices - standardDevices)
-        );
 
     // Find out how many FTDI devices are connected and installed
     // If one or more is connected then open the first one
@@ -138,34 +60,45 @@ int main (void)
 	   printf("FT_SetLatencyTimer: Status not OK %d\n", ftStatus);
 
 	// Wait for contact	
-	DWORD MyBytesReceived = 0;
-        while(MyBytesReceived == 0) 
-	{ 	
-	    printf("Waiting...\n");	
-	    FT_GetQueueStatus(ftHandle, &MyBytesReceived);
-            usleep(1000000); 			
-	}
+	while(1)
+		{
+		//printf("Waiting...\n");
+		DWORD MyBytesReceived = 0;
+		DWORD MyBytesRead = 0;
+		char InputBuffer[1];
 
-	printf("Responding...\"n");
-	// Now read data 
-	char data_out[2] = "Y";
-	DWORD w_data_len = 2;
-	DWORD data_written;
+		InputBuffer[0]=0;
+		ftStatus = FT_GetQueueStatus(ftHandle, &MyBytesReceived);
+		if((ftStatus == FT_OK) && (MyBytesReceived>0))
+		    FT_Read(ftHandle, &InputBuffer, 1, &MyBytesRead);
+	    
+		//printf("Read %d\n",InputBuffer[0]);
+		if(InputBuffer[0] == 0)
+			{
+			//printf("Ignoring...\n");
+			}	
 
-	ftStatus = FT_Write(ftHandle, data_out, w_data_len, &data_written);
-	if(ftStatus != FT_OK)
-	   printf("FT_Write: Status not OK %d\n", ftStatus);
-	else
-	   printf("1 byte sent\n");
-        
+		if(InputBuffer[0] == 42)
+			{
+			printf("Responding with Y...\n");
+			// Now read data 
+			char data_out[2] = "Y";
+			DWORD w_data_len = 1;
+			DWORD data_written;
+		
+			ftStatus = FT_Write(ftHandle, data_out, w_data_len, &data_written);
+			if(ftStatus != FT_OK)
+			   printf("FT_Write: Status not OK %d\n", ftStatus);
+			else
+			   printf("1 byte sent\n");
+			}
+        	}
         // Close the device
 	ftStatus = FT_Close(ftHandle);
      }
      else
         printf("No FTDI devices connnected to the computer\n");
     	 
-     retCode = EXIT_SUCCESS;
-
-exit:
+    retCode = EXIT_SUCCESS;
     return retCode;
 }
