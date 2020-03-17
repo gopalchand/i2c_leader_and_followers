@@ -75,7 +75,7 @@ int main (void)
 	// Wait for contact	
 	while(1)
 	{
-		printf("Waiting...\n");
+		//printf("Waiting...\n");
 		DWORD MyBytesReceived = 0;
 		DWORD MyBytesRead = 0;
 		char InputBuffer[1];
@@ -85,13 +85,13 @@ int main (void)
 		while(MyBytesReceived==0)
 		{
 		   ftStatus = FT_GetQueueStatus(ftHandle, &MyBytesReceived);
-		   printf("bytes received: %d\n", MyBytesReceived);
+		   //printf("bytes received: %d\n", MyBytesReceived);
 		   if((ftStatus == FT_OK) && (MyBytesReceived != 0))
 		      FT_Read(ftHandle, &InputBuffer, 1, &MyBytesRead);
 		   usleep(1000000);
 	    	}
 
-		printf("Read %d\n",InputBuffer[0]);
+		printf("Read request for register %d\n",InputBuffer[0]);
 		if(InputBuffer[0] == 0)
 		{
 		   printf("Ignoring...\n");
@@ -99,7 +99,7 @@ int main (void)
 
 		if(InputBuffer[0] == 42)
 		{
-		   printf("Register 42 response is positive...\n");
+		   printf("Responding with Y\n");
 		   // Now read data 
 		   char data_out[2] = "Y";
 		   DWORD w_data_len = 1;
@@ -111,8 +111,8 @@ int main (void)
 		      printf("FT_Write: Status not OK %d\n", ftStatus);
 		      return(retCode);
 		   }
-		   else
-		      printf("1 byte sent\n");
+		   //else
+		   //   printf("1 byte sent\n");
 		}
         }
         // Close the device
