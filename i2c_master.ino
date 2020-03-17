@@ -20,8 +20,8 @@ uint8_t transmissionStatus = 0;
 
 //unsigned long timeBetweenChecks = 60*60*1000; // 60 minutes  // TODO - use for production
 unsigned long timeBetweenChecks = 5000; // 5 seconds
-//unsigned long timeForRestart = 30*60*1000 // 15 minutes // TODO - use for production
-unsigned long timeForRestart = 15000; // 5 seconds
+//unsigned long timeForRestart = 30*60*1000 // 30 minutes // TODO - use for production
+unsigned long timeForRestart = 5000; // 5 seconds
 
 // Display debug message for particular device (slave/computer)
 void debugMsg(String string1, unsigned int device)
