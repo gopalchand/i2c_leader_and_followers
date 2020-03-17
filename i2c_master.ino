@@ -1,89 +1,103 @@
 #include <Wire.h>
 
-String inputString = "";         // a string to hold incoming data
-boolean stringComplete = false;  // whether the string is complete
+char errMsg[255];
+uint8_t  piezoPin = 3; // Piezo buzzer
+uint8_t  deviceCount = 2; // number of slave devices / computers
+uint8_t  resetPin[2] = {5, 6}; // lines to reset computers
+unsigned int interval[2] = {500, 500}; // intervals for reset for computers
 
-char command;
-int piezo = 3; // Piezo buzzer
-int reset1 = 5;  // Reset Computer1
-int reset2 = 6;  // Reset Computer2
+uint8_t computer_id = 0;
+uint8_t slave[2] = {0x21, 0x22}; // address of slaves
+uint8_t reg[2] = {42, 42}; // registers to read on slaves
+uint8_t maxRetry = 3; // retries before resetting computer
+uint8_t retries[2] = {0, 0}; // number of retries for computers
+unsigned int freq[2] = {300, 1000};  // note frequencies for piezo buzzer
 
-unsigned long interval = 500; //default interval is 500 milliseconds
-unsigned long counter = 0;
-unsigned long maxCounter = 1000;
+unsigned int bytesReturned = 0; // number of bytes read from slave
+uint8_t i; // index
+char c; // first byte returned
+uint8_t transmissionStatus = 0;
 
-int freq1 = 500;  // note 1 frequency
-int freq2 = 1024; // note 2 frequency
+//unsigned long timeBetweenChecks = 60*60*1000; // 60 minutes  // TODO - use for production
+unsigned long timeBetweenChecks = 5000; // 5 seconds
+//unsigned long timeForRestart = 30*60*1000 // 15 minutes // TODO - use for production
+unsigned long timeForRestart = 15000; // 5 seconds
+
+// Display debug message for particular device (slave/computer)
+void debugMsg(String string1, unsigned int device)
+{
+    Serial.print(string1);
+    Serial.println(device);
+}
 
 void setup()
 {
-  pinMode(reset1, OUTPUT);
-  pinMode(reset2, OUTPUT);
-  
-  Wire.begin();        // join i2c bus (address optional for master)
   Serial.begin(9600);  // start Serial for output
-
-  Serial.println("Enter 1 or 2 to reset device 1 or 2 respectively");
+  Wire.begin();        // join i2c bus without an address
   
-  digitalWrite(reset1, LOW);
-  digitalWrite(reset2, LOW);
+  // Set up reset lines
+  for(i=0;i<deviceCount;i++)
+  {
+    pinMode(resetPin[i], OUTPUT); 
+    digitalWrite(resetPin[i], LOW);
+  }
 }
 
 void loop()
 {
-  Wire.requestFrom(22, 1);    // request 1 bytes from slave device 
-
-  while(Wire.available())    // slave may send less than requested
-  { 
-    char c = Wire.read(); // receive a byte as character
-    Serial.print(c);         // print the character
-  }
-
-  delay(100);
-
-  // Wait until a key is pressed or timeout
-  counter=0;
-  while((Serial.available() == 0) && counter != maxCounter)
+  for(i=0;i<deviceCount;i++)
   {
-    counter++;
-  }
-  if(counter!=maxCounter)
-  {  
-    inputString = "";
-    stringComplete = false;
-    // Parse the string
-    while (!stringComplete && (inputString.length() == 0)) 
+    debugMsg("Requesting data from device ", i+1);    
+    Wire.beginTransmission(slave[i]); // start communication with slave
+    //debugMsg("..Register ", i+1);
+    Wire.write(reg[i]);      // request data from register
+    //debugMsg("..Transmit ", i+1);
+    transmissionStatus = Wire.endTransmission(false);  // transmit bytes but do not release bus - do a repeat start
+    if(transmissionStatus != 0)
     {
-      Serial.println("reading...");
-      char inChar = (char)Serial.read();
-      inputString += inChar;
-      if (inChar == '\n') 
+      debugMsg("...Error in transmission #1 for device ", i+1);
+      switch (transmissionStatus) 
       {
-        stringComplete = true;
-      } 
+        case 1: sprintf(errMsg, "Data too long for tranmist buffer"); break;
+        case 2: sprintf(errMsg, "NAK for transmit of address"); break;
+        case 3: sprintf(errMsg, "NAK for transmit of data"); break;
+        default: sprintf(errMsg, "Unknown error %d", transmissionStatus); break;
+      }
+      Serial.println(errMsg);
     }
-   Serial.println("Just read " + String(inputString));
-    Serial.println("------------------------------------------------");
-    if(inputString.equalsIgnoreCase(String("1")))
+    //debugMsg("..Request ", i+1);
+    bytesReturned = Wire.requestFrom(slave[i], (uint8_t) 1 , (uint8_t) true );  // get data from slave and release the bus
+
+    //debugMsg("..Check ", i+1);
+    if(bytesReturned > 0)
     {
-      tone(piezo, freq1, interval);
-    
-      Serial.println("Reset 1");    
-      digitalWrite(reset1, HIGH);
-      delay(interval);
-      digitalWrite(reset1, LOW);
+      char c = Wire.read(); // receive a first byte as character
+      if(c=='Y')
+      {
+        // Positive response
+        debugMsg("...Positive response from device ", i+1);
+        retries[i]=0;        
+      }
     }
-    if(inputString.equalsIgnoreCase(String("2")))
+    else
     {
-      tone(piezo, freq1, interval>>2);
-      delay(interval>>2);
-      tone(piezo, freq2, interval>>2);
-    
-      Serial.println("Reset 2");    
-      digitalWrite(reset2, HIGH);
-      delay(interval);
-      digitalWrite(reset2, LOW);
+        debugMsg("...Negative/no response from device ", i+1);
+        retries[i]++;
     }
-    Serial.println("------------------------------------------------");
+    if(retries[i] == maxRetry)
+    { 
+      retries[i]=0;     
+      debugMsg(">>>>>>>>>>>>> Resetting device ", i+1);      
+      tone(piezoPin, freq[i], interval[i]);
+      
+      digitalWrite(resetPin[i], HIGH);
+      delay(interval[i]);
+      digitalWrite(resetPin[i], LOW);
+      
+      debugMsg(">>>>>>>>>>>>> Waiting for device to come up ", i+1); 
+      delay(timeForRestart); // Wait for device to come up
+      debugMsg(">>>>>>>>>>>>> Done waiting ", i+1); 
+    }
   }
+  delay(timeBetweenChecks);
 }
