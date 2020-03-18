@@ -22,18 +22,17 @@ IPAddress gatewayIP(192, 168, 1, 1);
 IPAddress dnsIP(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 
-#endif hidden_ethernet_settings
+#endif
 
+unsigned int timeForEthernetReady = 1000; // 1 second
 unsigned int httpPort = 80;
 char resetSequence[] = {'#','#'}; 
 boolean foundResetSequence = false;
-unsigned int timeForEthernetReady = 1000; // 1 second
 unsigned int timeForResponse = 10000; // 10 seconds
 
-#endif use_ethernet
+#endif
 
 // I2C and Reset
-char errMsg[255];
 uint8_t  piezoPin = 3; // Piezo buzzer
 uint8_t  deviceCount = 2; // number of slave devices / computers
 uint8_t  resetPin[2] = {5, 6}; // lines to reset computers
@@ -51,67 +50,78 @@ uint8_t i; // index
 char c; // first byte returned
 uint8_t transmissionStatus = 0;
 
-unsigned long minutesBetweenChecks = 1; // 60 minutes  // TODO - use for production
-unsigned long minutesForRestart = 1; // 30 minutes // TODO - use for production
+uint8_t minutesBetweenChecks = 60; // 60 minutes TODO
+uint8_t minutesForRestart = 30; // 30 minutes TODO
 
-// Display debug message for particular device (slave/computer)
-void debugMsg(String string1, unsigned int device)
-{
-    Serial.print(string1);
-    Serial.print("[");
-    Serial.print(device);
-    Serial.println("]");
-}
+char msg[200]; // Message buffer for serial output
 
 void resetDevice(int device)
 {
- debugMsg("!! Resetting device ", device+1);      
+ sprintf(msg, "!! Resetting device %d", device+1); 
+ Serial.println(msg);
+ 
  tone(piezoPin, freq[device], interval[device]);
       
  digitalWrite(resetPin[device], HIGH);
  delay(interval[device]);
  digitalWrite(resetPin[device], LOW);
       
- debugMsg("!!  Waiting for device to come up ", device+1); 
+ sprintf(msg, "!! Waiting for device %d to come up", device+1);
+ Serial.println(msg); 
+ 
+ sprintf(msg, "!! Going to sleep for %d minutes", minutesForRestart);
+ Serial.println(msg);  
  // Wait for device to come up
  for(i=0;i<minutesForRestart;i++)
   delay(60*1000UL); 
- debugMsg("!!  Done ", device+1); 
+  
+ sprintf(msg, "!! Done waiting for device %d", device+1);
+ Serial.println(msg); 
 }
 
 #ifdef use_ethernet
-bool enableEthernet()
+void enableEthernet()
 {
   // Set up Server on Ethernet
   Ethernet.begin(mac, myIP, dnsIP, gatewayIP, subnet);
   delay(timeForEthernetReady);
-  Serial.print("Client running on ");
-  Serial.println(Ethernet.localIP());
+  if(Ethernet.localIP() != myIP)
+  {
+    sprintf(msg, "!! IP address not set");
+    Serial.println(msg);
+  }
 }
 
 void checkServer()
 {
   EthernetClient client;
-  Serial.println("Attempting to connect to server...");
+  sprintf(msg, "Attempting to connnect to server...");
+  Serial.println(msg);
+  
   if (client.connect(server, httpPort))
   {
-    Serial.println("Connected");
+    sprintf(msg, "Connected");
+    Serial.println(msg);
     client.println(getDirective);
     client.println("User-Agent: Arduino/1.0 Ethernet2");
     client.println(hostDirective);
     client.println("Connection: close");
     client.println();
-    Serial.println("Sent request");
+    sprintf(msg, "Sent Request");
+    Serial.println(msg);
   }
   else
   {
-    Serial.println("Unable to connect to server");
+    sprintf(msg, "Unable to connect to server");
+    Serial.println(msg);
   }
   
   delay(timeForResponse);
 
   // reset all computers if reset sequence is encountered in the returned web page
-  Serial.println("Parsing response");
+  sprintf(msg, "Parsing response");
+  Serial.println(msg);
+
   foundResetSequence = false;
   while((client.available()) && (foundResetSequence == false))
   {
@@ -125,13 +135,13 @@ void checkServer()
             foundResetSequence = true;
         }
     }
-    //Serial.print(c);   
+    //Serial.print(c);
   }
     
   while(client.available())
   {
     c = client.read();
-    //Serial.print(c);   
+    //Serial.print(c);
   }
   client.stop();
 }
@@ -141,7 +151,9 @@ void setup()
 {
   Serial.begin(9600);  // start Serial for output
   
-  Serial.println("Running...");
+  sprintf(msg, "Running...");
+  Serial.println(msg);
+
   Wire.begin();        // join i2c bus without an address
   
   // Set up reset lines
@@ -172,41 +184,49 @@ void loop()
 
   for(i=0;i<deviceCount;i++)
   {
-    debugMsg("Requesting data from device ", i+1);    
     Wire.beginTransmission(slave[i]); // start communication with slave
-    //debugMsg("..Register ", i+1);
     Wire.write(reg[i]);      // request data from register
-    //debugMsg("..Transmit ", i+1);
+    
+    sprintf(msg, "Transmitting to slave %d", i+1);
+    Serial.println(msg);
     transmissionStatus = Wire.endTransmission(false);  // transmit bytes but do not release bus - do a repeat start
     if(transmissionStatus != 0)
     {
-      debugMsg("...Error in transmission #1 for device ", i+1);
+      sprintf(msg, "!! Failure to transmit to %d", i+1);
+      Serial.println(msg);
       switch (transmissionStatus) 
       {
-        case 1: sprintf(errMsg, "Data too long for tranmist buffer"); break;
-        case 2: sprintf(errMsg, "NAK for transmit of address"); break;
-        case 3: sprintf(errMsg, "NAK for transmit of data"); break;
-        default: sprintf(errMsg, "Unknown error %d", transmissionStatus); break;
+        case 1: sprintf(msg, "!! Data too long for tranmist buffer"); break;
+        case 2: sprintf(msg, "!! NAK for transmit of address"); break;
+        case 3: sprintf(msg, "!! NAK for transmit of data"); break;
+        default: sprintf(msg, "!! Unknown error %d", transmissionStatus); break;
       }
-      Serial.println(errMsg);
+      Serial.println(msg);
     }
-    //debugMsg("..Request ", i+1);
+
+    sprintf(msg, "Receiving data from slave %d", i+1);
+    Serial.println(msg);
     bytesReturned = Wire.requestFrom(slave[i], (uint8_t) 1 , (uint8_t) true );  // get data from slave and release the bus
 
-    //debugMsg("..Check ", i+1);
+    sprintf(msg, "Checking response from %d", i+1);
+    Serial.println(msg);
     if(bytesReturned > 0)
     {
       char c = Wire.read(); // receive a first byte as character
       if(c=='Y')
       {
         // Positive response
-        debugMsg("...Positive response from device ", i+1);
+        sprintf(msg, "Positive response from slave %d", i+1);
+        Serial.println(msg);
+
         retries[i]=0;        
       }
     }
     else
     {
-        debugMsg("!! Negative/no response from device ", i+1);
+        sprintf(msg, "!! Negative response from slave %d", i+1);
+        Serial.println(msg);
+
         retries[i]++;
     }
     if(retries[i] == maxRetry)
@@ -215,7 +235,10 @@ void loop()
       resetDevice(i);
     }
   }
+
   // Sleep before next check
+  sprintf(msg, "Going to sleep for %d minutes", minutesBetweenChecks);
+  Serial.println(msg);  
   for(i=0;i<minutesBetweenChecks;i++)
       delay(60*1000UL); 
 }
