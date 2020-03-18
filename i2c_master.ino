@@ -1,12 +1,11 @@
 #include <Wire.h>
 #include <SPI.h>
-#include <Ethernet2.h>
+#include <Ethernet.h>
 
-//#define use_ethernet 1
-//#define hidden_ethernet_settings 1
+#define use_ethernet 1
+#define hidden_ethernet_settings 1
 
 #ifdef use_ethernet
-
 
 #ifdef hidden_ethernet_settings
 
@@ -25,11 +24,10 @@ IPAddress subnet(255, 255, 255, 0);
 
 #endif hidden_ethernet_settings
 
-EthernetClient client;
 unsigned int httpPort = 80;
 char resetSequence[] = {'#','#'}; 
 boolean foundResetSequence = false;
-unsigned int timeForEthernetReady = 5000; // 5 seconds
+unsigned int timeForEthernetReady = 1000; // 1 second
 unsigned int timeForResponse = 10000; // 10 seconds
 
 #endif use_ethernet
@@ -53,60 +51,47 @@ uint8_t i; // index
 char c; // first byte returned
 uint8_t transmissionStatus = 0;
 
-unsigned long minutesBetweenChecks = 60; // 60 minutes  // TODO - use for production
-unsigned long minutesForRestart = 30; // 30 minutes // TODO - use for production
-//unsigned long timeBetweenChecks = 1; // 1 minute
-//unsigned long timeForRestart = 1; // 1 minute
+unsigned long minutesBetweenChecks = 1; // 60 minutes  // TODO - use for production
+unsigned long minutesForRestart = 1; // 30 minutes // TODO - use for production
 
 // Display debug message for particular device (slave/computer)
 void debugMsg(String string1, unsigned int device)
 {
     Serial.print(string1);
-    Serial.println(device);    
+    Serial.print("[");
+    Serial.print(device);
+    Serial.println("]");
 }
 
 void resetDevice(int device)
 {
- debugMsg(">>>>>>>>>>>>> Resetting device ", device+1);      
+ debugMsg("!! Resetting device ", device+1);      
  tone(piezoPin, freq[device], interval[device]);
       
  digitalWrite(resetPin[device], HIGH);
  delay(interval[device]);
  digitalWrite(resetPin[device], LOW);
       
- debugMsg(">>>>>>>>>>>>> Waiting for device to come up ", device+1); 
+ debugMsg("!!  Waiting for device to come up ", device+1); 
  // Wait for device to come up
  for(i=0;i<minutesForRestart;i++)
   delay(60*1000UL); 
- debugMsg(">>>>>>>>>>>>> Done waiting ", device+1); 
+ debugMsg("!!  Done ", device+1); 
 }
 
-void setup()
-{
-  Serial.begin(9600);  // start Serial for output
-  
-  Serial.println("Running...");
-  Wire.begin();        // join i2c bus without an address
-  
-  // Set up reset lines
-  for(i=0;i<deviceCount;i++)
-  {
-    pinMode(resetPin[i], OUTPUT); 
-    digitalWrite(resetPin[i], LOW);
-  }
-
 #ifdef use_ethernet
+bool enableEthernet()
+{
   // Set up Server on Ethernet
   Ethernet.begin(mac, myIP, dnsIP, gatewayIP, subnet);
   delay(timeForEthernetReady);
   Serial.print("Client running on ");
   Serial.println(Ethernet.localIP());
-#endif
 }
 
-void loop()
-{ 
-#ifdef use_ethernet
+void checkServer()
+{
+  EthernetClient client;
   Serial.println("Attempting to connect to server...");
   if (client.connect(server, httpPort))
   {
@@ -126,6 +111,7 @@ void loop()
   delay(timeForResponse);
 
   // reset all computers if reset sequence is encountered in the returned web page
+  Serial.println("Parsing response");
   foundResetSequence = false;
   while((client.available()) && (foundResetSequence == false))
   {
@@ -141,8 +127,38 @@ void loop()
     }
     //Serial.print(c);   
   }
+    
+  while(client.available())
+  {
+    c = client.read();
+    //Serial.print(c);   
+  }
   client.stop();
+}
+#endif
 
+void setup()
+{
+  Serial.begin(9600);  // start Serial for output
+  
+  Serial.println("Running...");
+  Wire.begin();        // join i2c bus without an address
+  
+  // Set up reset lines
+  for(i=0;i<deviceCount;i++)
+  {
+    pinMode(resetPin[i], OUTPUT); 
+    digitalWrite(resetPin[i], LOW);
+  }
+#ifdef use_ethernet
+  enableEthernet();
+#endif
+}
+
+void loop()
+{ 
+#ifdef use_ethernet
+  checkServer();
   // Reset all devices if reset sequence has been found
   if(foundResetSequence)
   {
@@ -190,7 +206,7 @@ void loop()
     }
     else
     {
-        debugMsg("...Negative/no response from device ", i+1);
+        debugMsg("!! Negative/no response from device ", i+1);
         retries[i]++;
     }
     if(retries[i] == maxRetry)
