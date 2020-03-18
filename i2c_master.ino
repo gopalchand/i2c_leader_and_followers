@@ -51,10 +51,10 @@ uint8_t i; // index
 char c; // first byte returned
 uint8_t transmissionStatus = 0;
 
-unsigned long timeBetweenChecks = 60*60*1000; // 60 minutes  // TODO - use for production
-//unsigned long timeBetweenChecks = 5000; // 5 seconds
-unsigned long timeForRestart = 30*60*1000; // 30 minutes // TODO - use for production
-//unsigned long timeForRestart = 5000; // 5 seconds
+unsigned long minutesBetweenChecks = 60; // 60 minutes  // TODO - use for production
+unsigned long minutesForRestart = 30; // 30 minutes // TODO - use for production
+//unsigned long timeBetweenChecks = 1; // 1 minute
+//unsigned long timeForRestart = 1; // 1 minute
 
 // Display debug message for particular device (slave/computer)
 void debugMsg(String string1, unsigned int device)
@@ -73,7 +73,9 @@ void resetDevice(int device)
  digitalWrite(resetPin[device], LOW);
       
  debugMsg(">>>>>>>>>>>>> Waiting for device to come up ", device+1); 
- delay(timeForRestart); // Wait for device to come up
+ // Wait for device to come up
+ for(i=0;i<minutesForRestart;i++)
+  delay(60*1000UL); 
  debugMsg(">>>>>>>>>>>>> Done waiting ", device+1); 
 }
 
@@ -118,6 +120,7 @@ void loop()
   {
     Serial.println("Unable to connect to server");
   }
+  
   delay(timeForResponse);
 
   // reset all computers if reset sequence is encountered in the returned web page
@@ -126,8 +129,7 @@ void loop()
   {
     char c = client.read();
     if (c == resetSequence[0])
-    {
-      //delay(timeForNextCharacter);
+    {  
       if(client.available())
         {
           c = client.read();
@@ -191,5 +193,7 @@ void loop()
       resetDevice(i);
     }
   }
-  delay(timeBetweenChecks);
+  // Sleep before next check
+  for(i=0;i<minutesBetweenChecks;i++)
+      delay(60*1000UL); 
 }
