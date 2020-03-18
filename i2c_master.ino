@@ -2,10 +2,12 @@
 #include <SPI.h>
 #include <Ethernet2.h>
 
-#define use_ethernet 1
-#define hidden_ethernet_settings 1
+//#define use_ethernet 1
+//#define hidden_ethernet_settings 1
 
 #ifdef use_ethernet
+
+
 #ifdef hidden_ethernet_settings
 
 #include "settings/ipsettings.h"
@@ -134,20 +136,24 @@ void loop()
         {
           c = client.read();
           if (c == resetSequence[1])
-            for(i=0;i<deviceCount;i++)
-            {
-              resetDevice(i);
-              foundResetSequence = true;
-              retries[i]=0; // reset retries
-            }
+            foundResetSequence = true;
         }
     }
     //Serial.print(c);   
   }
-
   client.stop();
+
+  // Reset all devices if reset sequence has been found
+  if(foundResetSequence)
+  {
+    for(i=0;i<deviceCount;i++)
+    {
+      resetDevice(i);
+      retries[i]=0; // reset retries
+    } 
+  }
 #endif
- 
+
   for(i=0;i<deviceCount;i++)
   {
     debugMsg("Requesting data from device ", i+1);    
