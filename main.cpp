@@ -9,6 +9,13 @@
 #include <assert.h>
 #include "../ftd2xx.h"
 #include <unistd.h>
+#include <time.h>
+
+void displayTime()
+{
+    time_t timeNow = time(NULL);
+    printf("%s ", ctime(&timeNow));
+}
 
 int main (void)
 {
@@ -91,6 +98,7 @@ int main (void)
 		   usleep(1000000);
 	    	}
 
+                displayTime();
 		printf("Read request for register %d\n",InputBuffer[0]);
 		if(InputBuffer[0] == 0)
 		{
@@ -99,8 +107,9 @@ int main (void)
 
 		if(InputBuffer[0] == 42)
 		{
+		   displayTime();
 		   printf("Responding with Y\n");
-		   // Now read data 
+		   // Now write data 
 		   char data_out[2] = "Y";
 		   DWORD w_data_len = 1;
 		   DWORD data_written;
