@@ -1,7 +1,10 @@
 # i2c_master_and_slaves
 i2c Arduino master and Raspberry Pi plus Ubuntu slaves
 
-Ubuntu installation:
+# Arduino Uno installation
+
+# Ubuntu PC installation
+
 https://www.ftdichip.com/Drivers/D2XX.htm
 Check the readme file: https://www.ftdichip.com/Drivers/D2XX.htm
 Download 16-bit or 32-bit D2XX driver for Linu
@@ -26,3 +29,5 @@ reboot
 
 run make in hearbeat_i2c  
 run heartbeat_i2c
+
+# Raspberry pi Installation (model 3 only)
