@@ -1,6 +1,7 @@
 // credit LinusCDE98
 
 #include <pigpio.h>
+#include <unistd.h>
 #include <iostream>
 
 using namespace std;
@@ -18,16 +19,16 @@ int main()
       return 1; 
    else
    {
-      closeSlave()
+      closeSlave();
       return 0;  
    }
 }
 
 int val, status, data;
 
-int RunSlave()
+int runSlave()
 {
-   val=gpio.Initialise();
+   val=gpioInitialise();
    if(val <0)
    {
       printf("Unable to initialise GPIO\n");
@@ -35,8 +36,9 @@ int RunSlave()
    }
    xfer.control = getControlBits(slaveAddress, false);
    bscXfer(&xfer);
-   xfer.control = getControlBits(slaveAdress, true);
-   status = bsXfer(&xfer);
+   xfer.control = getControlBits(slaveAddress, true);
+   status = bscXfer(&xfer);
+   printf("bscXfer returns with %d\n", status);
    if(status >= 0)
    {
       xfer.rxCnt = 0;
@@ -45,9 +47,18 @@ int RunSlave()
          bscXfer(&xfer);
          if(xfer.rxCnt > 0)
          {
-            data = xfer.rxBuf[i];
+            data = xfer.rxBuf[0];
             printf("Received %d\n", data);
+            if (data == 42)
+            {
+               // transmit positive response 
+               printf("Responding with Y\n", data); 
+               xfer.txBuf[0]=89; // ASCII "Y"
+               xfer.txCnt = 1;
+               bscXfer(&xfer); 
+            }
          }
+         usleep(1000000); // sleep for a second
       }
    }
 }
@@ -74,7 +85,7 @@ int getControlBits(int address, bool open)
               (1<<2)| // Enable i2c 
               (1<<0);  // Enable Bsc
    else
-      flags = (1<<7)| // Abort/Clea
+      flags = (1<<7)| // Abort/Clear
               (0<<2)| // Disable i2c
               (0<<0);  // Disable Bsc
 
