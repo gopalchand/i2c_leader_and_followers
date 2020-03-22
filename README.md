@@ -2,6 +2,7 @@
 i2c Arduino master and Raspberry Pi plus Ubuntu slaves
 
 # Arduino Uno installation
+If the return IP address is 0.67.67.67 then the Ethernet library is too old (Linux Arduino). Compile on a Windows system with a an IDE version of 1.8.12 or higher.
 
 # Ubuntu PC installation
 
