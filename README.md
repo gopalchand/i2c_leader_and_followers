@@ -1,10 +1,10 @@
 # i2c_master_and_slaves
 i2c Arduino master and Raspberry Pi plus Ubuntu slaves
 
-# Arduino Uno installation
-If the return IP address is 0.67.67.67 then the Ethernet library is too old (Linux Arduino). Compile on a Windows system with a an IDE version of 1.8.12 or higher.
+## Arduino Uno installation
+If the return IP address is 0.67.67.67 then the Ethernet library may be too old e.g. Linux Arduino installation. Compile on a Windows system with a an IDE version of 1.8.12 or higher and upload.
 
-# Ubuntu PC installation
+## Ubuntu PC installation
 
 https://www.ftdichip.com/Drivers/D2XX.htm
 Check the readme file: https://www.ftdichip.com/Drivers/D2XX.htm
@@ -31,4 +31,4 @@ reboot
 run make in hearbeat_i2c  
 run heartbeat_i2c
 
-# Raspberry pi Installation (model 3 only)
+## Raspberry pi Installation (model 3 only)
