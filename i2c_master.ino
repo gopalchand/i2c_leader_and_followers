@@ -2,6 +2,8 @@
 #include <SPI.h>
 #include <Ethernet.h>
 
+//#define simulate_reset 1
+
 #define use_ethernet 1
 #define hidden_ethernet_settings 1
 
@@ -9,7 +11,7 @@
 
 #ifdef hidden_ethernet_settings
 
-#include "settings/ipsettings.h"
+#include "ipsettings.h"
 
 #else
 
@@ -24,11 +26,11 @@ IPAddress subnet(255, 255, 255, 0);
 
 #endif
 
-unsigned int timeForEthernetReady = 1000; // 1 second
+unsigned int timeForEthernetReady = 1000; // 1 second = 1000 ms
 unsigned int httpPort = 80;
 char resetSequence[] = {'#','#'}; 
 boolean foundResetSequence = false;
-unsigned int timeForResponse = 10000; // 10 seconds
+unsigned int timeForResponse = 10000; // 10 seconds = 10000 ms
 
 #endif
 
@@ -39,6 +41,7 @@ uint8_t  resetPin[2] = {5, 6}; // lines to reset computers
 unsigned int interval[2] = {500, 500}; // intervals for reset for computers
 
 uint8_t computer_id = 0;
+
 uint8_t slave[2] = {0x21, 0x22}; // address of slaves
 uint8_t reg[2] = {42, 42}; // registers to read on slaves
 uint8_t maxRetry = 3; // retries before resetting computer
@@ -50,10 +53,11 @@ uint8_t i; // index
 char c; // first byte returned
 uint8_t transmissionStatus = 0;
 
-uint8_t minutesBetweenChecks = 60; // 60 minutes TODO
-uint8_t minutesForRestart = 30; // 30 minutes TODO
+uint8_t minutesBetweenChecks = 60; // 60 minutes
+uint8_t minutesForRestart = 30; // 30 minutes
+uint8_t secondsInMinute = 60; // 60 seconds
 
-char msg[200]; // Message buffer for serial output
+char msg[100]; // Message buffer for serial output
 
 void resetDevice(int device)
 {
@@ -61,10 +65,15 @@ void resetDevice(int device)
  Serial.println(msg);
  
  tone(piezoPin, freq[device], interval[device]);
-      
+
+#ifndef simulate_reset
  digitalWrite(resetPin[device], HIGH);
  delay(interval[device]);
  digitalWrite(resetPin[device], LOW);
+#else
+ sprintf(msg, "!! Simulation of device %d reset", device+1);
+ Serial.println(msg); 
+#endif
       
  sprintf(msg, "!! Waiting for device %d to come up", device+1);
  Serial.println(msg); 
@@ -73,7 +82,7 @@ void resetDevice(int device)
  Serial.println(msg);  
  // Wait for device to come up
  for(i=0;i<minutesForRestart;i++)
-  delay(60*1000UL); 
+  delay(secondsInMinute*1000UL); 
   
  sprintf(msg, "!! Done waiting for device %d", device+1);
  Serial.println(msg); 
@@ -213,6 +222,10 @@ void loop()
     if(bytesReturned > 0)
     {
       char c = Wire.read(); // receive a first byte as character
+      
+      sprintf(msg, "Read the following from slave %d: 0x%x (%c)\n", i+1, c, c);
+      Serial.println(msg);
+      
       if(c=='Y')
       {
         // Positive response
@@ -220,6 +233,13 @@ void loop()
         Serial.println(msg);
 
         retries[i]=0;        
+      }
+      else
+      {
+        sprintf(msg, "!! Unexpected response from slave %d", i+1);
+        Serial.println(msg);
+
+        retries[i]++;
       }
     }
     else
@@ -229,6 +249,10 @@ void loop()
 
         retries[i]++;
     }
+    
+    sprintf(msg, "Retry count for slave %d is %d\n", i+1, retries[i]);
+    Serial.println(msg);
+
     if(retries[i] == maxRetry)
     { 
       retries[i]=0;
@@ -237,8 +261,8 @@ void loop()
   }
 
   // Sleep before next check
-  sprintf(msg, "Going to sleep for %d minutes", minutesBetweenChecks);
+  sprintf(msg, "Going to sleep for %d minutes\n", minutesBetweenChecks);
   Serial.println(msg);  
   for(i=0;i<minutesBetweenChecks;i++)
-      delay(60*1000UL); 
+      delay(secondsInMinute*1000UL); 
 }
