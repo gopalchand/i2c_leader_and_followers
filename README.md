@@ -12,7 +12,7 @@ Remote hardware with internet connectivity that requires physical hardware reboo
 ## Hardware pre-requisites
 Arduino Uno Board (i2c master)
 Arduino ethernet shield e.g. WizNet Wiz550io
-Raspberry Pi 3 B+ with BCM2837xx GPIO chip. The Raspberry Pi 4 has the BCM2711 chip and is not supported (i2c slave)
+Raspberry Pi 3 B+ with BCM2837xx GPIO chip (i2c slave)
 FTDI UMFT201XB-WE Development Board for Ubuntu or Windows® (i2c slave)
 Logic Level Converter e.g. KeeYees 4 Channels IIC I2C Logic Level Converter Bi-Directional Module 3.3V to 5V Shifter for Arduino (convert Arduino +5V to Raspberry Pi and FTDI UMFT201XB-WE +3.3V).
 
@@ -69,8 +69,9 @@ make
 sudo make install
 
 ## Known limitations
-Raspberry Pi 3 required
-Raspberry Pi not using TxStatus interrupts or DMA to avoid loading CPU
+Raspberry Pi 3 is required. The Raspberry Pi 4 has the BCM2711 chip and is not supported in this code.
+Raspberry Pi not using interrupts and CPU loading will occur.
+The BCM2837 I2C slave using the Broadcom Serial Controller (BSC) does not support clock stretching or DMA.
 
 ## License
 This entire project is available under the GNU General Public License v3 licence. See licence.txt for more details.
