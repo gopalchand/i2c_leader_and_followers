@@ -37,13 +37,32 @@ Optional buzzer
 
 ## Hardware schematic
 
-Subfolder Arduino_i2c_Leader_rev6 contains KiCad EeSchema file
+Subfolder Arduino_i2c_Leader_rev6 contains a KiCad EeSchema file
 
 ## Arduino Uno leader installation
 
 Subfolder i2c_leader_arduino contains i2c_leader_arduino.ino file
 
-Note: If the return IP address is 0.67.67.67 then the Ethernet library may be too old e.g. Linux Arduino installation. Compile on a Windows system with a an IDE version of 1.8.12 or higher and upload.
+The use_ethernet compiler directive is set to 1 if an Ethernet shield is being used
+The hidden_ethernet_settings compiler directive is set to 1 then enter the details for the website with the reset code in the file ipsettings.h:
+
+mac: MAC address for the Ethernet shield
+
+server: DNS name of the web server
+
+getDirective: GET directive to use (contains file to download after /). The file should contain "##" to force a reboot
+
+hostDirective: HTTP directive required for proper operation
+
+myIP: IP address of the Ethernet shield
+
+gatewayIP: IP address of the gateway
+
+dnsIP: IP address of the DNS server
+
+subnet: Subnet mask
+
+Note: If the return IP address is 0.67.67.67 then the Ethernet library may be too old e.g. Linux Arduino installation. In this case, compile it on a Windows® system with a an IDE version of 1.8.12 or higher and upload.
 
 ## Ubuntu follower installation
 Download appropriate 16-bit or 32-bit D2XX drivers for Linux from https://www.ftdichip.com/Drivers/D2XX.htm
@@ -75,9 +94,11 @@ run heartbeat_i2c
 A crontab entry is necessary to ensure that the follower software is able to respond to requests afer a reboot.
 
 ## Windows® follower installation
-Download Windows® driver from https://www.ftdichip.com/Drivers/D2XX.htm
+Download the Windows® driver from https://www.ftdichip.com/Drivers/D2XX.htm
 
 Download the appropriate installation guide and follow the instructions: https://www.ftdichip.com/Support/Documents/InstallGuides.htm
+
+See Ubuntu installation instructions for further details
 
 ## Raspberry pi Installation (model 3 only)
 Background: https://raspberrypi.stackexchange.com/questions/76109/raspberry-as-an-i2c-slave
@@ -90,7 +111,7 @@ cd pigpio-master
 make
 sudo make install
 
-Folder i2c_follower_raspberrypi contains the file. A crontab entry is necessary to ensure that the follower software is able to respond to requests afer a reboot.
+Folder i2c_follower_raspberrypi contains the follower file. A crontab entry is necessary to ensure that the follower software is able to respond to requests afer a reboot.
 
 ## Known limitations
 Raspberry Pi 3 is required. The Raspberry Pi 4 has the BCM2711 chip and is not supported in this code.
