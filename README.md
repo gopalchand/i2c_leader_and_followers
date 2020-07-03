@@ -12,7 +12,7 @@ An i2c tutorial can be found here: https://www.robot-electronics.co.uk/i2c-tutor
 Remote hardware with internet connectivity that requires physical hardware reboots after becoming non-reseponsive on the network.
 
 ## Hardware pre-requisites
-Arduino Uno Board (i2c master)
+Arduino Uno Board (i2c leader)
 
 Arduino ethernet shield e.g. WizNet Wiz550io
 
@@ -21,8 +21,6 @@ Raspberry Pi 3 B+ with BCM2837xx GPIO chip (i2c follower)
 FTDI UMFT201XB-WE Development Board for Ubuntu or Windows® (i2c follower)
 
 Logic Level Converter e.g. KeeYees 4 Channels IIC I2C Logic Level Converter Bi-Directional Module 3.3V to 5V Shifter for Arduino (convert Arduino +5V to Raspberry Pi and FTDI UMFT201XB-WE +3.3V).
-
-Arduino_i2c_Leader_rev6 contains schematic
 
 ## Hardware for device resets
 PC prototyping board e.g. Gikfun Prototype Shield DIY KIT For Arduino UNO R3 Mega 328P
@@ -39,7 +37,12 @@ Optional buzzer
 
 ## Hardware schematic
 
-## Arduino Uno Master installation
+Subfolder Arduino_i2c_Leader_rev6 contains KiCad EeSchema file
+
+## Arduino Uno leader installation
+
+Subfolder i2c_leader_arduino contains i2c_leader_arduino.ino file
+
 Note: If the return IP address is 0.67.67.67 then the Ethernet library may be too old e.g. Linux Arduino installation. Compile on a Windows system with a an IDE version of 1.8.12 or higher and upload.
 
 ## Ubuntu follower installation
@@ -55,7 +58,7 @@ ln -sf /usr/local/lib/libftd2xx.so.1.4.8 /usr/local/lib/libftd2xx.so
 
 change 1.4.8 to the latest version if necessary
 
-Copy Makefile and main.cpp to release/examples/heartbeat_i2c
+Copy subfolder i2c_follower_ubuntu files Makefile and heartbeat_i2c.cpp to release/examples/heartbeat_i2c
 
 Ensure that installed modules do not interfere with D2XX driver access by editing /etc/modprobe.d/blacklist
 add:
@@ -68,6 +71,8 @@ reboot
 
 run make in hearbeat_i2c  
 run heartbeat_i2c
+
+A crontab entry is necessary to ensure that the follower software is able to respond to requests afer a reboot.
 
 ## Windows® follower installation
 Download Windows® driver from https://www.ftdichip.com/Drivers/D2XX.htm
@@ -84,6 +89,8 @@ unzip master.zip
 cd pigpio-master
 make
 sudo make install
+
+Folder i2c_follower_raspberrypi contains the file. A crontab entry is necessary to ensure that the follower software is able to respond to requests afer a reboot.
 
 ## Known limitations
 Raspberry Pi 3 is required. The Raspberry Pi 4 has the BCM2711 chip and is not supported in this code.
