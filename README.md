@@ -37,7 +37,7 @@ Optional buzzer
 
 ## Hardware schematic
 
-Subfolder Arduino_i2c_Leader_rev6 contains a KiCad EeSchema file
+Subfolder Arduino_i2c_Leader_rev6 contains a KiCad EeSchema file (https://kicad-pcb.org/)
 
 ## Arduino Uno leader installation
 
