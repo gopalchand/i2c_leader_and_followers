@@ -1,10 +1,10 @@
-# i2c_master_and_slaves
+# i2c_leader_and_followers
 Created by Gopal Chand
 
 ## What is it?
 Lights out management using an Arduino. 
 
-An Arduino i2c master checks the status of Raspberry Pi 3, Linux or Windows® i2c slaves and reboots them through a hardware reset if necessary. The reboot can be forced if required through a web page code downloaded using an Ethernet shield.
+An Arduino i2c leader checks the status of Raspberry Pi 3, Linux or Windows® i2c followers and reboots them through a hardware reset if necessary. The reboot can be forced if required through a web page code downloaded using an Ethernet shield.
 
 An i2c tutorial can be found here: https://www.robot-electronics.co.uk/i2c-tutorial
 
@@ -16,16 +16,16 @@ Arduino Uno Board (i2c master)
 
 Arduino ethernet shield e.g. WizNet Wiz550io
 
-Raspberry Pi 3 B+ with BCM2837xx GPIO chip (i2c slave)
+Raspberry Pi 3 B+ with BCM2837xx GPIO chip (i2c follower)
 
-FTDI UMFT201XB-WE Development Board for Ubuntu or Windows® (i2c slave)
+FTDI UMFT201XB-WE Development Board for Ubuntu or Windows® (i2c follower)
 
 Logic Level Converter e.g. KeeYees 4 Channels IIC I2C Logic Level Converter Bi-Directional Module 3.3V to 5V Shifter for Arduino (convert Arduino +5V to Raspberry Pi and FTDI UMFT201XB-WE +3.3V).
 
 ## Hardware for device resets
 PC prototyping board e.g. Gikfun Prototype Shield DIY KIT For Arduino UNO R3 Mega 328P
 
-Up to 2 of the following (1 for each slave)
+Up to 2 of the following (1 for each follower)
 
   10K resistor
   
@@ -40,7 +40,7 @@ Optional buzzer
 ## Arduino Uno Master installation
 Note: If the return IP address is 0.67.67.67 then the Ethernet library may be too old e.g. Linux Arduino installation. Compile on a Windows system with a an IDE version of 1.8.12 or higher and upload.
 
-## Ubuntu slave installation
+## Ubuntu follower installation
 Download appropriate 16-bit or 32-bit D2XX drivers for Linux from https://www.ftdichip.com/Drivers/D2XX.htm
 
 Download the readme file: https://www.ftdichip.com/Drivers/D2XX.htm
@@ -67,7 +67,7 @@ reboot
 run make in hearbeat_i2c  
 run heartbeat_i2c
 
-## Windows® slave installation
+## Windows® follower installation
 Download Windows® driver from https://www.ftdichip.com/Drivers/D2XX.htm
 
 Download the appropriate installation guide and follow the instructions: https://www.ftdichip.com/Support/Documents/InstallGuides.htm
@@ -88,7 +88,7 @@ Raspberry Pi 3 is required. The Raspberry Pi 4 has the BCM2711 chip and is not s
 
 Raspberry Pi not using interrupts and CPU loading will occur.
 
-The BCM2837 i2c slave using the Broadcom Serial Controller (BSC) does not support clock stretching or DMA.
+The BCM2837 i2c follower using the Broadcom Serial Controller (BSC) does not support clock stretching or DMA.
 
 ## License
 This entire project is available under the GNU General Public License v3 licence. See licence.txt for more details.
