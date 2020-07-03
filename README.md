@@ -22,6 +22,8 @@ FTDI UMFT201XB-WE Development Board for Ubuntu or Windows® (i2c follower)
 
 Logic Level Converter e.g. KeeYees 4 Channels IIC I2C Logic Level Converter Bi-Directional Module 3.3V to 5V Shifter for Arduino (convert Arduino +5V to Raspberry Pi and FTDI UMFT201XB-WE +3.3V).
 
+Arduino_i2c_Leader_rev6 contains schematic
+
 ## Hardware for device resets
 PC prototyping board e.g. Gikfun Prototype Shield DIY KIT For Arduino UNO R3 Mega 328P
 
