@@ -193,7 +193,7 @@ void loop()
 
   for(i=0;i<deviceCount;i++)
   {
-    Wire.beginTransmission(folllower[i]); // start communication with follower
+    Wire.beginTransmission(follower[i]); // start communication with follower
     Wire.write(reg[i]);      // request data from register
     
     sprintf(msg, "Transmitting to slave %d", i+1);
@@ -213,9 +213,9 @@ void loop()
       Serial.println(msg);
     }
 
-    sprintf(msg, "Receiving data from slave %d", i+1);
+    sprintf(msg, "Receiving data from follower %d", i+1);
     Serial.println(msg);
-    bytesReturned = Wire.requestFrom(slave[i], (uint8_t) 1 , (uint8_t) true );  // get data from slave and release the bus
+    bytesReturned = Wire.requestFrom(follower[i], (uint8_t) 1 , (uint8_t) true );  // get data from slave and release the bus
 
     sprintf(msg, "Checking response from %d", i+1);
     Serial.println(msg);
