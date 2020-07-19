@@ -62,7 +62,16 @@ dnsIP: IP address of the DNS server
 
 subnet: Subnet mask
 
-Note: If the return IP address is 0.67.67.67 then the Ethernet library may be too old e.g. Linux Arduino installation. In this case, compile it on a Windows® system with a an IDE version of 1.8.12 or higher and upload.
+Note: If the return IP address is 0.67.67.67 then the Ethernet library may be too old e.g. Linux Arduino installation. In this case, compile it on a Windows® system with a an IDE version of 1.8.12 or higher transfer %temp%/arduino_build_xxx/i2c_leader_arduino.ino.hex to the target system. Run avrdude:
+
+/usr/share/arduino/hardware/tools/avrdude -v -p atmega328p -c arduino -P /dev/ttyACM0 -b 115200 -D -U flash:w:i2c_leader_arduino.ino.hex:i 
+
+In all cases, test the successful installation with:
+
+stty -F /dev/ttyACM0 ispeed 9600 ospeed 9600 -ignpar cs8 -cstopb -echo
+cat /dev/ttyACM0
+
+Replace ttyACM0 with the correct Arduino device if necessary.
 
 ## Ubuntu follower installation
 Download appropriate 16-bit or 32-bit D2XX drivers for Linux from https://www.ftdichip.com/Drivers/D2XX.htm
